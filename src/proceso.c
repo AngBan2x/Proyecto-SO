@@ -1,5 +1,5 @@
 #include "../include/proceso.h"
-#include <math.h>
+// #include <math.h>
 
 // Variables globales
 
@@ -19,9 +19,6 @@ bool vehiculosEstacionados[NUM_RECEPTORES];
 sem_t mutexMultas;
 
 // Función auxiliar
-double calcularDistancia(int x1, int y1, int x2, int y2) {
-  return sqrt(pow(x2 - x1, 2) + pow(y2 - y1, 2));
-}
 
 void *generarMapa(void *argumento) {
   while (ejecucionActiva) {
@@ -47,25 +44,32 @@ void *generarMapa(void *argumento) {
 
 void *emisor(void *argumento) {
   int id = *((int *)argumento);
-  free(argumento);
+  free(argumento); // liberar el argumento pero nos quedamos con el id
 
   while (ejecucionActiva) {
+    // settear la senal del emisor
     SenalCorneta senal;
     senal.idEmisor = id;
     senal.validada = false;
     senal.procesada = false;
     senal.marcaTiempo = time(NULL);
 
+    // guarda el id de la senal y la prepara para la siguiente senal
     sem_wait(&emisores[id].bloqueo);
     senal.idSenal = emisores[id].siguienteIdSenal++;
     sem_post(&emisores[id].bloqueo);
 
+    // intentar buscar receptores que puedan tener el buffer disponible
     for (int i = 0; i < NUM_RECEPTORES; i++) {
       if (sem_trywait(&receptores[i].vacio) == 0) {
+
+        // como el buffer es compartido, se protege de los otros emisores
         sem_wait(&receptores[i].mutex);
         receptores[i].buffer[receptores[i].cola] = senal;
         receptores[i].cola = (receptores[i].cola + 1) % TAMANO_BUFFER;
         sem_post(&receptores[i].mutex);
+
+        // indicar que hay senales por procesar
         sem_post(&receptores[i].lleno);
         printf("[Emisor %d] Señal %d enviada a Receptor %d\n", id + 1,
                senal.idSenal, i + 1);
@@ -82,9 +86,11 @@ void *semaforo(void *argumento) {
 
   while (ejecucionActiva) {
     for (int i = 0; i < NUM_RECEPTORES; i++) {
+      // verifica si un receptor tiene senales en el buffer
       if (sem_trywait(&receptores[i].lleno) == 0) {
         sem_wait(&receptores[i].mutex);
         int idx = receptores[i].cabeza;
+        // recuperar la senal del buffer del receptor
         SenalCorneta *senal = &receptores[i].buffer[idx];
 
         if (!senal->validada) {
@@ -92,12 +98,14 @@ void *semaforo(void *argumento) {
           bool justificada = (rand() % 5 == 0); // probabilidad de justificados
 
           if (justificada) {
+            // contar la senal del emisor como justificada
             sem_wait(&emisores[senal->idEmisor].bloqueo);
             emisores[senal->idEmisor].senalesJustificadas++;
             sem_post(&emisores[senal->idEmisor].bloqueo);
 
+            // contar las senales justificadas totales
             sem_wait(&mutexMultas);
-            senalesJustificadas++;
+            senalesJustificadas++; // senales justificadas totales
             sem_post(&mutexMultas);
             printf("[Semaforo %d] Validada señal %d como JUSTIFICADA\n", id + 1,
                    senal->idSenal);
@@ -114,6 +122,7 @@ void *semaforo(void *argumento) {
           }
         }
 
+        // avanzar en el buffer y marcar al receptor como disponible
         receptores[i].cabeza = (idx + 1) % TAMANO_BUFFER;
         sem_post(&receptores[i].mutex);
         sem_post(&receptores[i].vacio);
@@ -131,8 +140,9 @@ void *receptor(void *argumento) {
   static int reproduccionesPorEmisor[NUM_EMISORES] = {0};
 
   while (ejecucionActiva) {
+    // esperar a que haya almenos una senal por procesar
     sem_wait(&receptores[id].lleno);
-    sem_wait(&receptores[id].mutex);
+    sem_wait(&receptores[id].mutex); // proteger el procesado de la senal
 
     int idx = receptores[id].cabeza;
     SenalCorneta *senal = &receptores[id].buffer[idx];

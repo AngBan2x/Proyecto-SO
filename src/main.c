@@ -6,9 +6,11 @@ int main() {
   pthread_t hilos[NUM_EMISORES + NUM_RECEPTORES + NUM_SEMAFOROS + 3];
   int hiloIndex = 0;
 
+  // inicializar semaforos
   sem_init(&mapa.bloqueo, 0, 1);
   sem_init(&mutexMultas, 0, 1);
 
+  // inicializar receptores
   for (int i = 0; i < NUM_RECEPTORES; i++) {
     sem_init(&receptores[i].mutex, 0, 1);
     sem_init(&receptores[i].vacio, 0, TAMANO_BUFFER);
@@ -17,6 +19,7 @@ int main() {
     receptores[i].cola = 0;
   }
 
+  // inicializar emisores
   for (int i = 0; i < NUM_EMISORES; i++) {
     sem_init(&emisores[i].bloqueo, 0, 1);
     sem_init(&conductores[i].bloqueo, 0, 1);
@@ -25,6 +28,7 @@ int main() {
     conductores[i].amonestaciones = 0;
   }
 
+  // generar mapa
   pthread_create(&hilos[hiloIndex++], NULL, generarMapa, NULL);
 
   // Crear receptores
@@ -48,6 +52,7 @@ int main() {
     pthread_create(&hilos[hiloIndex++], NULL, semaforo, id);
   }
 
+  // gestionar multas
   pthread_create(&hilos[hiloIndex++], NULL, gestionMultas, NULL);
 
   sleep(SEMANAS_SIMULACION_MES * 7);

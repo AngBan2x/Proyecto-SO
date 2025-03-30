@@ -8,15 +8,16 @@
 #include <time.h>
 #include <unistd.h>
 
+// Definiendo constantes
 #define MAX_SENALES_JUSTIFICADAS_SEMANALES 200
 #define MAX_AMONESTACIONES_SEMANALES 150
 #define TAMANO_BUFFER 3
-#define NUM_EMISORES 3000
-#define NUM_RECEPTORES 3000
-#define NUM_SEMAFOROS 10
-#define NUM_CENTROS_MULTAS 500
-#define SEMANAS_SIMULACION_MES 1
-#define RADIO_CIUDAD 12000
+#define NUM_EMISORES 200
+#define NUM_RECEPTORES 200
+#define NUM_SEMAFOROS 50
+#define NUM_CENTROS_MULTAS 10
+#define SEMANAS_SIMULACION_MES 4
+#define RADIO_CIUDAD 1200
 
 // Estructuras
 typedef struct {
