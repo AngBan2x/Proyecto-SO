@@ -62,7 +62,7 @@ El código implementa un sistema distribuido de gestión de señales vehiculares
 
 ### **Asunciones Clave en el Diseño:**
 1. **Modelado de Justificación**:  
-   Se asume que el 50% de las señales son justificables (decisión aleatoria), aunque en un sistema real dependería de sensores o contexto geográfico.
+   Se asume que el 20% de las señales son justificables (decisión aleatoria), aunque en un sistema real dependería de sensores o contexto geográfico.
 
 2. **Ubicación Estática de Vehículos**:  
    Los receptores se marcan como `vehiculosEstacionados = true` permanentemente, simplificando la condición de validación.
